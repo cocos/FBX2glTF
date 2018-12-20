@@ -4,7 +4,7 @@
 */
 
 const childProcess = require('child_process');
-const fs = require('fs');
+const fs = require('fs-extra');
 const os = require('os');
 const path = require('path');
 const rimraf = require('rimraf');
@@ -49,6 +49,10 @@ function convert(srcFile, destFile, opts = []) {
 
       let args = opts.slice(0);
       args.push('--input', srcPath, '--output', destPath);
+	  
+      fs.ensureDirSync(destDir);
+      fs.ensureDirSync(destPath + '_out');
+      
       let child = childProcess.spawn(tool, args);
 
       let output = '';
@@ -72,6 +76,11 @@ function convert(srcFile, destFile, opts = []) {
           reject(new Error(`Converter output:\n` +
                            (output.length ? output : "<none>")));
         } else {
+
+          if (destExt === ".gltf") {
+            destPath = path.join(destPath + "_out", path.basename(destFile, destExt));
+          }
+
           resolve(destPath + destExt);
         }
       });
