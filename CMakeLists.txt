@@ -30,7 +30,7 @@ endif()
 
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 find_package(Threads REQUIRED)
-find_package(Iconv QUIET)
+find_library(ICONV_LIBRARY iconv)
 
 # create a compilation database for e.g. clang-tidy
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -263,6 +263,7 @@ else()
   target_link_libraries(libFBX2glTF
     ${LIBXML2_LIBRARIES}
     ${ZLIB_LIBRARIES}
+    ${ICONV_LIBRARY}
   )
 endif()
 
@@ -270,7 +271,6 @@ target_include_directories(libFBX2glTF PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 target_include_directories(libFBX2glTF SYSTEM PUBLIC
-  Iconv::Iconv
   ${FBXSDK_INCLUDE_DIR}
   ${DRACO_INCLUDE_DIR}
   ${MATHFU_INCLUDE_DIRS}
@@ -282,11 +282,6 @@ target_include_directories(libFBX2glTF SYSTEM PUBLIC
   ${LIBXML2_INCLUDE_DIR}
   ${ZLIB_INCLUDE_DIRS}
 )
-
-if (Iconv_FOUND)
-  target_link_libraries(libFBX2glTF Iconv::Iconv)
-  target_include_directories(libFBX2glTF SYSTEM PUBLIC Iconv::Iconv)
-endif()
 
 target_include_directories(appFBX2glTF PUBLIC
   "third_party/CLI11"
