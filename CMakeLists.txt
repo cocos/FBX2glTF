@@ -216,7 +216,7 @@ set(LIB_SOURCE_FILES
 )
 
 add_library(libFBX2glTF STATIC ${LIB_SOURCE_FILES})
-set_target_properties(libFBX2glTF PROPERTIES OUTPUT_NAME "FBX2glTF")
+set_target_properties(libFBX2glTF PROPERTIES OUTPUT_NAME "FBX2glTF" CXX_STANDARD 17)
 add_executable(appFBX2glTF src/FBX2glTF.cpp)
 set_target_properties(appFBX2glTF PROPERTIES OUTPUT_NAME "FBX2glTF")
 
