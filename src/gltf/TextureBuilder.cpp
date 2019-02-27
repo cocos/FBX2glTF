@@ -19,8 +19,6 @@
 #include <gltf/properties/ImageData.hpp>
 #include <gltf/properties/TextureData.hpp>
 
-#include <cppcodec/base64_default_rfc4648.hpp>
-
 // keep track of some texture data as we load them
 struct TexInfo {
   explicit TexInfo(int rawTexIx) : rawTexIx(rawTexIx) {}
@@ -211,8 +209,7 @@ std::shared_ptr<TextureData> TextureBuilder::simple(int rawTexIndex, const std::
     // fallback is tiny transparent PNG
     image = new ImageData(
         textureName,
-        "data:image/ccmissing;base64," + base64::encode(rawTexture.fileName.c_str(), rawTexture.fileName.size()));
-        // "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==");
+        rawTexture.fileName);
   }
 
   std::shared_ptr<TextureData> texDat = gltf.textures.hold(
