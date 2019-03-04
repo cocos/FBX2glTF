@@ -12,7 +12,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#ifdef WIN32
+#ifdef _WIN32
 #include <filesystem>
 #endif
 
@@ -164,7 +164,7 @@ bool CreatePath(const char* path) {
   StringUtils::PathSeparator separator = StringUtils::PATH_WIN;
 #endif
   std::string folder = StringUtils::GetFolderString(path);
-#ifdef WIN32
+#ifdef _WIN32
   std::error_code err;
   std::filesystem::create_directories(folder, err);
   if (err) {
