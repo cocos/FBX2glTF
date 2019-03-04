@@ -12,7 +12,9 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#ifdef WIN32
 #include <filesystem>
+#endif
 
 #include <stdint.h>
 #include <stdio.h>
@@ -162,12 +164,14 @@ bool CreatePath(const char* path) {
   StringUtils::PathSeparator separator = StringUtils::PATH_WIN;
 #endif
   std::string folder = StringUtils::GetFolderString(path);
+#ifdef WIN32
   std::error_code err;
   std::filesystem::create_directories(folder, err);
   if (err) {
     return false;
   }
-  /*std::string clean = StringUtils::GetCleanPathString(folder, separator);
+#else
+  std::string clean = StringUtils::GetCleanPathString(folder, separator);
   std::string build = clean;
   for (int i = 0; i < clean.length(); i++) {
     if (clean[i] == separator && i > 0) {
@@ -179,7 +183,8 @@ bool CreatePath(const char* path) {
       }
     }
     build[i] = clean[i];
-  }*/
+  }
+#endif
   return true;
 }
 
