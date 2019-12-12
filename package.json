@@ -1,6 +1,6 @@
 {
   "name": "@cocos/fbx2gltf",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "main": "index.js",
   "scripts": {},
   "repository": {
@@ -12,5 +12,8 @@
   "devDependencies": {
     "download": "^7.1.0",
     "fs-extra": "^8.1.0"
+  },
+  "dependencies": {
+    "rimraf": "^2.6.2"
   }
 }
