@@ -3,7 +3,7 @@ version: 1.0.{build}
 
 image:
   - Visual Studio 2017
-  - MacOS
+  - macos-mojave
 
 for:
 -
@@ -68,7 +68,7 @@ for:
 -
   matrix:
     only:
-      - image: macOS
+      - image: macos-mojave
   
   install:
   - export HOMEBREW_NO_AUTO_UPDATE=true # Disable homebrew auto-update
