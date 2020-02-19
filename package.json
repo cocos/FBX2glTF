@@ -1,6 +1,6 @@
 {
   "name": "@cocos/fbx2gltf",
-  "version": "1.0.3",
+  "version": "1.0.5",
   "main": "index.js",
   "scripts": {},
   "repository": {

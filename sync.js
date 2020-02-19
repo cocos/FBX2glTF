@@ -26,4 +26,4 @@ const download = require('download');
     );
 
     await fs.writeFile(ps.join(__dirname, 'bin', 'VERSION'), version);
-})('v0.9.7-c0');
+})('v0.9.7-c1');
