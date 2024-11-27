@@ -23,9 +23,9 @@ find_package(Threads REQUIRED)
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_BINARY_DIR}")
 
 # stuff
-find_package(LibXml2 CONFIG REQUIRED)
-find_package(ZLIB CONFIG REQUIRED)
-find_package(fmt CONFIG CONFIG REQUIRED)
+find_package(libxml2  REQUIRED)
+find_package(ZLIB REQUIRED)
+find_package(fmt REQUIRED)
 
 # fbx sdk
 if (NOT DEFINED FbxSdkHome)
