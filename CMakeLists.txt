@@ -235,13 +235,13 @@ target_include_directories(libFBX2glTF SYSTEM PUBLIC
   ${CPPCODEC_INCLUDE_DIR}
 )
 
-# if (APPLE)
-#  find_package(Iconv MODULE REQUIRED)
-#  target_link_libraries(libFBX2glTF Iconv)
-# else()
-#  find_package(libiconv MODULE REQUIRED)
-#  target_link_libraries(libFBX2glTF libiconv::libiconv)
-# endif()
+if (APPLE)
+ find_package(Iconv MODULE REQUIRED)
+ target_link_libraries(libFBX2glTF Iconv)
+else()
+ find_package(libiconv MODULE REQUIRED)
+ target_link_libraries(libFBX2glTF libiconv::libiconv)
+endif()
 
 
 target_include_directories(appFBX2glTF PUBLIC

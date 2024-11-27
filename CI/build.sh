@@ -112,6 +112,8 @@ installDependencies() {
     git clone --branch v1.3.1 --single https://github.com/madler/zlib.git third_party/zlib
     git clone --branch libxml2-2.11.9 https://github.com/winlibs/libxml2.git third_party/libxml2
     git clone --branch 11.0.2 https://github.com/fmtlib/fmt third_party/fmt
+
+    vcpkg install libiconv
 }
 
 runCMake() {
