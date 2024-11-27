@@ -140,6 +140,7 @@ runCMake() {
     if [ "$IsMacOS" = true ]; then
         cmake_cmd="$cmake_cmd -DCMAKE_OSX_ARCHITECTURES=\"x86_64;arm64\""
     fi
+    eval $cmake_cmd
 
     cmake --build $cmakeBuildDir --config $buildType
 
