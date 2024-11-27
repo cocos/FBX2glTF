@@ -3,6 +3,7 @@
 IsWindows=false
 IsMacOS=false
 IsLinux=false
+is64BitOperatingSystem=false
 CurrentDir=$(dirname "$0")
 
 cmakeInstallPrefix='out/install'
@@ -19,6 +20,10 @@ case "${unameOut}" in
     MINGW*)     IsWindows=true;;
     *)          ;;
 esac
+
+if [ "$(uname -m)" == "x86_64" ]; then
+    is64BitOperatingSystem=true
+fi
 
 parseArgs() {
     args=("$@")
@@ -43,11 +48,31 @@ printEnvironments() {
     cat << EOF
 IsWindows: $IsWindows
 IsMacOS: $IsMacOS
+IsLinux: $IsLinux
+Is64BitOperatingSystem: $is64BitOperatingSystem
 Current working directory: $(pwd)
 ArtifactPath: $ArtifactPath
 IncludeDebug: $IncludeDebug
 Version: $Version
 EOF
+}
+
+installVcpkg() {
+    vcpkgUrl='https://github.com/microsoft/vcpkg.git'
+    git clone "$vcpkgUrl"
+    
+    if [ "$IsWindows" = true ]; then
+        ./vcpkg/bootstrap-vcpkg.bat
+    elif [ "$IsMacOS" = true ] || [ "$IsLinux" = true ]; then
+        ./vcpkg/bootstrap-vcpkg.sh
+        if [ "$IsMacOS" = true ]; then
+            # xcode-select --install
+            :
+        fi
+    else
+        echo 'vcpkg is not available on target platform.'
+        exit 1
+    fi
 }
 
 downloadFile() {
@@ -100,6 +125,26 @@ installFbxSdk() {
         echo "FBX SDK MacOS pkg: $fbxSdkMacOSPkgFile"
         sudo installer -pkg "$fbxSdkMacOSPkgFile" -target /
         ln -s "/Applications/Autodesk/FBX SDK/$fbxSdkVersion" fbxsdk/Home
+    elif [ "$IsLinux" = true ]; then
+        fbxSdkUrl='https://www.autodesk.com/content/dam/autodesk/www/adn/fbx/2020-2-1/fbx202021_fbxsdk_linux.tar.gz'
+        fbxSdkTarball=fbxsdk/fbxsdk.tar.gz
+
+        echo "Downloading FBX SDK tar ball from $fbxSdkUrl ..."
+        downloadFile "$fbxSdkUrl" "$fbxSdkTarball"
+        tar -zxvf "$fbxSdkTarball" -C fbxsdk
+
+        fbxSdkInstallationProgram=fbxsdk/fbx202021_fbxsdk_linux
+        chmod ugo+x "$fbxSdkInstallationProgram"
+
+        fbxSdkHomeLocation="$HOME/fbxsdk/install"
+        echo "Installing from $fbxSdkInstallationProgram..."
+        mkdir -p "$fbxSdkHomeLocation"
+
+        # This is really a HACK way after many tries...
+        yes yes | "$fbxSdkInstallationProgram" "$fbxSdkHomeLocation"
+        echo ''
+
+        echo "Installation finished($fbxSdkHomeLocation)."
     else
         echo 'FBXSDK is not available on target platform.'
         exit 1
@@ -108,12 +153,31 @@ installFbxSdk() {
     echo "$fbxSdkHome"
 }
 
-installDependencies() {
-    git clone --branch v1.3.1 --single https://github.com/madler/zlib.git third_party/zlib
-    git clone --branch libxml2-2.11.9 https://github.com/winlibs/libxml2.git third_party/libxml2
-    git clone --branch 11.0.2 https://github.com/fmtlib/fmt third_party/fmt
+installDependenciesForMacOS() {
+    # Download both x86-64 and arm-64 libs and merge them into a uniform binary.
+    # https://www.f-ax.de/dev/2022/11/09/how-to-use-vcpkg-with-universal-binaries-on-macos/
+    dependencies=('libxml2' 'zlib' 'fmt')
+    for libName in "${dependencies[@]}"; do
+        ./vcpkg/vcpkg install --triplet=x64-osx "$libName"
+        ./vcpkg/vcpkg install --triplet=arm64-osx "$libName"
+    done
 
-    vcpkg install libiconv
+    python3 ./CI/lipo-dir-merge.py ./vcpkg/installed/arm64-osx ./vcpkg/installed/x64-osx ./vcpkg/installed/uni-osx
+}
+
+installDependenciesForOthers() {
+    dependencies=('libxml2' 'zlib' 'fmt')
+    for libName in "${dependencies[@]}"; do
+        ./vcpkg/vcpkg install "$libName"
+    done
+}
+
+installDependencies() {
+    if [ "$IsMacOS" = true ]; then
+        installDependenciesForMacOS
+    else
+        installDependenciesForOthers
+    fi
 }
 
 runCMake() {
@@ -131,18 +195,27 @@ runCMake() {
         defineVersion="-DFBX_GLTF_CONV_CLI_VERSION=$Version"
     fi
 
-    echo "fbx home is $fbxSdkHome"
-    cmake_cmd="cmake -DCMAKE_BUILD_TYPE=\"${buildType}\" \
-            -DCMAKE_INSTALL_PREFIX=\"${cmakeInstallPrefix}/${buildType}\" \
-            -DFbxSdkHome:STRING=\"${fbxSdkHome}\" \
-            -DPOLYFILLS_STD_FILESYSTEM=\"${polyfillsStdFileSystem}\" \
-            \"${defineVersion}\" \
-            -S. -B\"${cmakeBuildDir}\""
-
     if [ "$IsMacOS" = true ]; then
-        cmake_cmd="$cmake_cmd -DCMAKE_OSX_ARCHITECTURES=\"x86_64;arm64\""
+        echo "fbx home is $fbxSdkHome"
+        cmake -DCMAKE_TOOLCHAIN_FILE="vcpkg/scripts/buildsystems/vcpkg.cmake" \
+            -DCMAKE_PREFIX_PATH="./vcpkg/installed/uni-osx" \
+            -DVCPKG_TARGET_TRIPLET="uni-osx" \
+            -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" \
+            -DCMAKE_BUILD_TYPE="${buildType}" \
+            -DCMAKE_INSTALL_PREFIX="${cmakeInstallPrefix}/${buildType}" \
+            -DFbxSdkHome:STRING="${fbxSdkHome}" \
+            -DPOLYFILLS_STD_FILESYSTEM="${polyfillsStdFileSystem}" \
+            "${defineVersion}" \
+            -S. -B"${cmakeBuildDir}"
+    else
+        cmake -DCMAKE_TOOLCHAIN_FILE="vcpkg/scripts/buildsystems/vcpkg.cmake" \
+                -DCMAKE_BUILD_TYPE=$"{buildType}" \
+                -DCMAKE_INSTALL_PREFIX="${cmakeInstallPrefix}/${buildType}" \
+                -DFbxSdkHome:STRING="${fbxSdkHome}" \
+                -DPOLYFILLS_STD_FILESYSTEM="${polyfillsStdFileSystem}" \
+                "${defineVersion}" \
+                -S. -B"${cmakeBuildDir}"
     fi
-    eval $cmake_cmd
 
     cmake --build $cmakeBuildDir --config $buildType
 
@@ -176,5 +249,6 @@ build() {
 parseArgs "$@"
 printEnvironments
 installFbxSdk
+installVcpkg
 installDependencies
 build

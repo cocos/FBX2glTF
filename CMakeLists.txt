@@ -22,13 +22,10 @@ find_package(Threads REQUIRED)
 
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_BINARY_DIR}")
 
-# stuff to use git to download source code
-add_subdirectory(third_party/libxml2)
-add_subdirectory(third_party/zlib)
-add_subdirectory(third_party/fmt)
-
-# set(FBXSDK_INCLUDE_DIR "/Users/minggo/sourcecode/FBX2glTF/sdk/Darwin/2019.2/include")
-# set(FBXSDK_LIBRARY "/Users/minggo/sourcecode/FBX2glTF/sdk/Darwin/2019.2/lib/clang/release/libfbxsdk.a")
+# stuff
+find_package(LibXml2 REQUIRED)
+find_package(ZLIB REQUIRED)
+find_package(fmt CONFIG REQUIRED)
 
 # fbx sdk
 if (NOT DEFINED FbxSdkHome)
@@ -216,9 +213,9 @@ target_link_libraries(libFBX2glTF
   ${FBXSDK_LIBRARY}
   ${CMAKE_DL_LIBS}
   ${CMAKE_THREAD_LIBS_INIT}
-  zlibstatic
-  LibXml2
-  fmt
+  ZLIB:ZLIB
+  LibXml2:LibXml2
+  fmt:fmt
 )
 
 target_include_directories(libFBX2glTF PUBLIC
