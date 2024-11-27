@@ -12,47 +12,59 @@ if ("${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
     "Building from within the source tree is not supported! ${typical_usage_str}")
 endif ()
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
 include(ExternalProject)
-
-# FBX
-foreach (FBXSDK_VERSION "2019.2")
-  find_package(FBX)
-  if (FBXSDK_FOUND)
-    break()
-  endif()
-endforeach(FBXSDK_VERSION)
-if (NOT FBXSDK_FOUND)
-  message(FATAL_ERROR
-    "Can't find FBX SDK in either:\n"
-    " - Mac OS X: ${FBXSDK_APPLE_ROOT}\n"
-    " - Windows: ${FBXSDK_WINDOWS_ROOT}\n"
-    " - Linux: ${FBXSDK_LINUX_ROOT}"
-  )
-endif()
-
-if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan_paths.cmake")
-  message(FATAL_ERROR
-    "The Conan package manager must run ('install') first. ${typical_usage_str}")
-endif()
-include("${CMAKE_BINARY_DIR}/conan_paths.cmake")
 
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 find_package(Threads REQUIRED)
 
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_BINARY_DIR}")
 
-# stuff we get from Conan
-find_package(boost_filesystem MODULE REQUIRED)
-find_package(boost_optional MODULE REQUIRED)
-find_package(libxml2 MODULE REQUIRED)
-find_package(zlib MODULE REQUIRED)
-find_package(fmt MODULE REQUIRED)
+# stuff to use git to download source code
+add_subdirectory(third_party/libxml2)
+add_subdirectory(third_party/zlib)
+add_subdirectory(third_party/fmt)
 
-# create a compilation database for e.g. clang-tidy
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+# set(FBXSDK_INCLUDE_DIR "/Users/minggo/sourcecode/FBX2glTF/sdk/Darwin/2019.2/include")
+# set(FBXSDK_LIBRARY "/Users/minggo/sourcecode/FBX2glTF/sdk/Darwin/2019.2/lib/clang/release/libfbxsdk.a")
+
+# fbx sdk
+if (NOT DEFINED FbxSdkHome)
+    message(FATAL_ERROR "You must specify the FBX SDK home.")
+endif ()
+message (STATUS "FBX SDK home: ${FbxSdkHome}")
+
+# https://blog.kitware.com/cmake-and-the-default-build-type/
+message (STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
+if (NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "Debug")
+  set (FbxSdkConfiguration "debug")
+else ()
+  set (FbxSdkConfiguration "release")
+endif ()
+message (STATUS "FBX SDK configuration: ${FbxSdkConfiguration}")
+
+message (STATUS "CMAKE_CXX_COMPILER_ID: ${CMAKE_CXX_COMPILER_ID}")
+set (FBXSDK_INCLUDE_DIR "${FbxSdkHome}/include")
+if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    if (EXISTS "${FbxSdkHome}/lib/vs2022")
+        set (FBXSDK_LIBRARY "${FbxSdkHome}/lib/vs2022/x64/${FbxSdkConfiguration}/libfbxsdk.lib")
+    elseif (EXISTS "${FbxSdkHome}/lib/vs2019")
+        set (FBXSDK_LIBRARY "${FbxSdkHome}/lib/vs2019/x64/${FbxSdkConfiguration}/libfbxsdk.lib")
+    else ()
+        set (FbxSdkLibraries "${FbxSdkHome}/lib/vs2017/x64/${FbxSdkConfiguration}/libfbxsdk.lib")
+        set (FbxSdkDynLibraries "${FbxSdkHome}/lib/vs2017/x64/${FbxSdkConfiguration}/libfbxsdk.dll")
+    endif ()
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+    set (FBXSDK_LIBRARY "${FbxSdkHome}/lib/clang/${FbxSdkConfiguration}/libfbxsdk.a")
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    set (FBXSDK_LIBRARY "${FbxSdkHome}/lib/gcc/x64/${FbxSdkConfiguration}/libfbxsdk.a")
+else ()
+    message (FATAL_ERROR "Can not decide FBX SDK library to use cause of unknown C++ compiler ID: ${CMAKE_CXX_COMPILER_ID}")
+endif ()
+message (STATUS "FBX SDK include directories: ${FBXSDK_INCLUDE_DIR}")
+message (STATUS "FBX SDK libraries: ${FBXSDK_LIBRARY}")
 
 # DRACO
 ExternalProject_Add(Draco
@@ -95,7 +107,6 @@ ExternalProject_Add(FiFoMap
   INSTALL_COMMAND ${CMAKE_COMMAND} -E echo "Skipping FiFoMap install step."
 )
 set(FIFO_MAP_INCLUDE_DIR "${CMAKE_BINARY_DIR}/fifo_map/src/FiFoMap/src")
-
 
 # cppcodec
 ExternalProject_Add(CPPCodec
@@ -201,25 +212,14 @@ endif()
 
 target_link_libraries(libFBX2glTF
   ${FRAMEWORKS}
-  boost_filesystem::boost_filesystem
-  boost_optional::boost_optional
   ${DRACO_LIB}
-  optimized ${FBXSDK_LIBRARY}
-  debug ${FBXSDK_LIBRARY_DEBUG}
-  fmt::fmt
-  libxml2::libxml2
-  zlib::zlib
+  ${FBXSDK_LIBRARY}
   ${CMAKE_DL_LIBS}
   ${CMAKE_THREAD_LIBS_INIT}
+  zlibstatic
+  LibXml2
+  fmt
 )
-
-if (APPLE)
- find_package(Iconv MODULE REQUIRED)
- target_link_libraries(libFBX2glTF Iconv)
-else()
- find_package(libiconv MODULE REQUIRED)
- target_link_libraries(libFBX2glTF libiconv::libiconv)
-endif()
 
 target_include_directories(libFBX2glTF PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -235,12 +235,16 @@ target_include_directories(libFBX2glTF SYSTEM PUBLIC
   ${CPPCODEC_INCLUDE_DIR}
 )
 
+if (APPLE)
+ find_package(Iconv MODULE REQUIRED)
+ target_link_libraries(libFBX2glTF Iconv)
+else()
+ find_package(libiconv MODULE REQUIRED)
+ target_link_libraries(libFBX2glTF libiconv::libiconv)
+endif()
+
+
 target_include_directories(appFBX2glTF PUBLIC
   "third_party/CLI11"
 )
 target_link_libraries(appFBX2glTF libFBX2glTF)
-
-install (TARGETS libFBX2glTF appFBX2glTF
-        RUNTIME DESTINATION bin
-        ARCHIVE DESTINATION lib
-)
