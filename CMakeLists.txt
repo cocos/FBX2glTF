@@ -23,9 +23,9 @@ find_package(Threads REQUIRED)
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_BINARY_DIR}")
 
 # stuff
-find_package(LibXml2 REQUIRED)
-find_package(ZLIB REQUIRED)
-find_package(fmt CONFIG REQUIRED)
+find_package(LibXml2 CONFIG REQUIRED)
+find_package(ZLIB CONFIG REQUIRED)
+find_package(fmt CONFIG CONFIG REQUIRED)
 
 # fbx sdk
 if (NOT DEFINED FbxSdkHome)
@@ -213,9 +213,9 @@ target_link_libraries(libFBX2glTF
   ${FBXSDK_LIBRARY}
   ${CMAKE_DL_LIBS}
   ${CMAKE_THREAD_LIBS_INIT}
-  ZLIB:ZLIB
-  LibXml2:LibXml2
-  fmt:fmt
+  ZLIB::ZLIB
+  libxml2::libxml2
+  fmt::fmt
 )
 
 target_include_directories(libFBX2glTF PUBLIC
