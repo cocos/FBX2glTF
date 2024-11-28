@@ -211,7 +211,7 @@ target_link_libraries(libFBX2glTF
   ${DRACO_LIB}
   ${CMAKE_DL_LIBS}
   ${CMAKE_THREAD_LIBS_INIT}
-  ${LIBXML2_LIBRARIES}
+  LibXml2::LibXml2
   ZLIB::ZLIB
   fmt::fmt
   ${FBXSDK_LIBRARY}
