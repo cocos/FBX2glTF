@@ -186,8 +186,15 @@ set(LIB_SOURCE_FILES
 
 add_library(libFBX2glTF STATIC ${LIB_SOURCE_FILES})
 set_target_properties(libFBX2glTF PROPERTIES OUTPUT_NAME "FBX2glTF")
+if(MSVC)
+    set_target_properties(libFBX2glTF PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
+
 add_executable(appFBX2glTF src/FBX2glTF.cpp)
 set_target_properties(appFBX2glTF PROPERTIES OUTPUT_NAME "FBX2glTF")
+if(MSVC)
+    set_target_properties(appFBX2glTF PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
 
 add_dependencies(libFBX2glTF
   Draco
@@ -245,11 +252,6 @@ target_include_directories(appFBX2glTF PUBLIC
   "third_party/CLI11"
 )
 target_link_libraries(appFBX2glTF PRIVATE libFBX2glTF fmt::fmt-header-only)
-
-if(MSVC)
-    set_target_properties(libFBX2glTF PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-    set_target_properties(appFBX2glTF PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-endif()
 
 install (TARGETS libFBX2glTF DESTINATION "bin")
 install (FILES $<TARGET_LINKER_FILE:libFBX2glTF> DESTINATION "lib" OPTIONAL)
