@@ -209,12 +209,12 @@ endif()
 target_link_libraries(libFBX2glTF
   ${FRAMEWORKS}
   ${DRACO_LIB}
-  ${FBXSDK_LIBRARY}
   ${CMAKE_DL_LIBS}
   ${CMAKE_THREAD_LIBS_INIT}
   ${LIBXML2_LIBRARIES}
   ZLIB::ZLIB
   fmt::fmt
+  ${FBXSDK_LIBRARY}
 )
 
 target_include_directories(libFBX2glTF PUBLIC
