@@ -213,6 +213,7 @@ target_link_libraries(libFBX2glTF
   PRIVATE ${CMAKE_THREAD_LIBS_INIT}
   PRIVATE ZLIB::ZLIB
   PRIVATE fmt::fmt
+  PRIVATE fmt::fmt-header-only
   PRIVATE ${FBXSDK_LIBRARY}
 )
 
