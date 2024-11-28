@@ -189,6 +189,8 @@ runCMake() {
             -S. -B"${cmakeBuildDir}"
     else
         cmake -DCMAKE_TOOLCHAIN_FILE="vcpkg/scripts/buildsystems/vcpkg.cmake" \
+                -DCMAKE_PREFIX_PATH="./vcpkg/installed/x64-windows-static" \
+                -DVCPKG_TARGET_TRIPLET="x64-windows-static" \
                 -DCMAKE_BUILD_TYPE=$"{buildType}" \
                 -DCMAKE_INSTALL_PREFIX="${cmakeInstallPrefix}/${buildType}" \
                 -DFbxSdkHome:STRING="${fbxSdkHome}" \
