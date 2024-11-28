@@ -73,6 +73,7 @@ ExternalProject_Add(Draco
   CMAKE_ARGS
         -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
         -DBUILD_FOR_GLTF=1
+        -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64"
 )
 set(DRACO_INCLUDE_DIR "${CMAKE_BINARY_DIR}/draco/include")
 if (WIN32)
