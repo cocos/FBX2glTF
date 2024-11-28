@@ -211,11 +211,17 @@ target_link_libraries(libFBX2glTF
   ${DRACO_LIB}
   ${CMAKE_DL_LIBS}
   ${CMAKE_THREAD_LIBS_INIT}
-  LibXml2::LibXml2
   ZLIB::ZLIB
   fmt::fmt
   ${FBXSDK_LIBRARY}
 )
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    # I don't know why on Ubuntu "PUBLIC" is needed, otherwise there're link errors.
+    target_link_libraries(libFBX2glTF PUBLIC LibXml2::LibXml2)
+else ()
+    target_link_libraries(libFBX2glTF PRIVATE ${LIBXML2_LIBRARIES})
+endif ()
 
 target_include_directories(libFBX2glTF PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/src
