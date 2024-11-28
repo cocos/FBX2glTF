@@ -174,7 +174,7 @@ installDependenciesForWindows() {
 }
 
 installDependenciesForOthers() {
-    dependencies=('libxml2' 'zlib')
+    dependencies=('libxml2' 'zlib' 'fmt')
     for libName in "${dependencies[@]}"; do
         ./vcpkg/vcpkg install "$libName"
     done
