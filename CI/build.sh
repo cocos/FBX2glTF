@@ -93,8 +93,9 @@ downloadFile() {
     done
 }
 
+fbxSdkHome=$(pwd)/fbxsdk/Home
+
 installFbxSdk() {
-    fbxSdkHome=$(pwd)/fbxsdk/Home
     mkdir -p fbxsdk
 
     if [ "$IsWindows" = true ]; then
@@ -125,8 +126,28 @@ installFbxSdk() {
         echo "FBX SDK MacOS pkg: $fbxSdkMacOSPkgFile"
         sudo installer -pkg "$fbxSdkMacOSPkgFile" -target /
         ln -s "/Applications/Autodesk/FBX SDK/$fbxSdkVersion" fbxsdk/Home
+    elif [ "$IsLinux" = true ]; then
+        fbxSdkUrl='https://www.autodesk.com/content/dam/autodesk/www/adn/fbx/2020-2-1/fbx202021_fbxsdk_linux.tar.gz'
+        fbxSdkTarball=fbxsdk/fbxsdk.tar.gz
+
+        echo "Downloading FBX SDK tar ball from $fbxSdkUrl ..."
+        downloadFile "$fbxSdkUrl" "$fbxSdkTarball"
+        tar -zxvf "$fbxSdkTarball" -C fbxsdk
+
+        fbxSdkInstallationProgram=fbxsdk/fbx202021_fbxsdk_linux
+        chmod ugo+x "$fbxSdkInstallationProgram"
+
+        fbxSdkHomeLocation="$HOME/fbxsdk/install"
+        echo "Installing from $fbxSdkInstallationProgram..."
+        mkdir -p "$fbxSdkHomeLocation"
+
+        # This is really a HACK way after many tries...
+        yes yes | "$fbxSdkInstallationProgram" "$fbxSdkHomeLocation"
+        echo ''
+
+        echo "Installation finished($fbxSdkHomeLocation)."
     else
-        echo 'FBXSDK is not available on unsupported platform.'
+        echo 'FBXSDK is not available on target platform.'
         exit 1
     fi
 
@@ -136,7 +157,7 @@ installFbxSdk() {
 installDependenciesForMacOS() {
     # Download both x86-64 and arm-64 libs and merge them into a uniform binary.
     # https://www.f-ax.de/dev/2022/11/09/how-to-use-vcpkg-with-universal-binaries-on-macos/
-    dependencies=('libxml2' 'zlib' 'fmt')
+    dependencies=('fmt')
     for libName in "${dependencies[@]}"; do
         ./vcpkg/vcpkg install --triplet=x64-osx "$libName"
         ./vcpkg/vcpkg install --triplet=arm64-osx "$libName"
@@ -145,10 +166,17 @@ installDependenciesForMacOS() {
     python3 ./CI/lipo-dir-merge.py ./vcpkg/installed/arm64-osx ./vcpkg/installed/x64-osx ./vcpkg/installed/uni-osx
 }
 
-installDependenciesForOthers() {
+installDependenciesForWindows() {
     dependencies=('libxml2' 'zlib' 'fmt')
     for libName in "${dependencies[@]}"; do
-        ./vcpkg/vcpkg install --triplet x64-windows-static "$libName"
+        ./vcpkg/vcpkg install "$libName" --triplet x64-windows-static
+    done
+}
+
+installDependenciesForOthers() {
+    dependencies=('libxml2' 'zlib')
+    for libName in "${dependencies[@]}"; do
+        ./vcpkg/vcpkg install "$libName"
     done
 }
 
@@ -158,13 +186,12 @@ installDependencies() {
     elif [ "$IsWindows" = true ]; then
         installDependenciesForWindows
     else
-        echo 'Can not install dependence on unsupported platform'
-        exit 1
+        installDependenciesForOthers
     fi
 }
 
 runCMake() {
-    buildType="$1"
+    buildType="${1}"
     echo "Build $buildType ..."
     cmakeBuildDir="out/build/$buildType"
 
@@ -179,7 +206,13 @@ runCMake() {
     fi
 
     if [ "$IsMacOS" = true ]; then
-        echo "fbx home is $fbxSdkHome"
+        cpu_core_count=$(sysctl -n hw.logicalcpu)
+    else
+        cpu_core_count=$(nproc)
+    fi
+    echo "cpu core count is $cpu_core_count"
+    echo "fbx home is $fbxSdkHome"
+    if [ "$IsMacOS" = true ]; then
         cmake -DCMAKE_TOOLCHAIN_FILE="vcpkg/scripts/buildsystems/vcpkg.cmake" \
             -DCMAKE_PREFIX_PATH="./vcpkg/installed/uni-osx" \
             -DVCPKG_TARGET_TRIPLET="uni-osx" \
@@ -188,24 +221,35 @@ runCMake() {
             -DCMAKE_INSTALL_PREFIX="${cmakeInstallPrefix}/${buildType}" \
             -DFbxSdkHome:STRING="${fbxSdkHome}" \
             -DPOLYFILLS_STD_FILESYSTEM="${polyfillsStdFileSystem}" \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=10.13 \
             "${defineVersion}" \
             -S. -B"${cmakeBuildDir}"
+    elif [ "$IsWindows" = true ]; then
+        cmake -DCMAKE_TOOLCHAIN_FILE="vcpkg/scripts/buildsystems/vcpkg.cmake" \
+            -DCMAKE_PREFIX_PATH="./vcpkg/installed/x64-windows-static" \
+            -DVCPKG_TARGET_TRIPLET="x64-windows-static" \
+            -DCMAKE_BUILD_TYPE="${buildType}" \
+            -DCMAKE_INSTALL_PREFIX="${cmakeInstallPrefix}/${buildType}" \
+            -DFbxSdkHome:STRING="${fbxSdkHome}" \
+            -DPOLYFILLS_STD_FILESYSTEM="${polyfillsStdFileSystem}" \
+            -DFBX_STATIC_RTL=1 \
+            -A x64 \
+            "${defineVersion}" \
+            -S. -B"${cmakeBuildDir}" 
     else
         cmake -DCMAKE_TOOLCHAIN_FILE="vcpkg/scripts/buildsystems/vcpkg.cmake" \
-                -DCMAKE_PREFIX_PATH="./vcpkg/installed/x64-windows-static" \
-                -DVCPKG_TARGET_TRIPLET="x64-windows-static" \
-                -DCMAKE_BUILD_TYPE=$"{buildType}" \
-                -DCMAKE_INSTALL_PREFIX="${cmakeInstallPrefix}/${buildType}" \
-                -DFbxSdkHome:STRING="${fbxSdkHome}" \
-                -DPOLYFILLS_STD_FILESYSTEM="${polyfillsStdFileSystem}" \
-                "${defineVersion}" \
-                -S. -B"${cmakeBuildDir}"
+            -DCMAKE_BUILD_TYPE="${buildType}" \
+            -DCMAKE_INSTALL_PREFIX="${cmakeInstallPrefix}/${buildType}" \
+            -DFbxSdkHome:STRING="${fbxSdkHome}" \
+            -DPOLYFILLS_STD_FILESYSTEM="${polyfillsStdFileSystem}" \
+            "${defineVersion}" \
+            -S. -B"${cmakeBuildDir}"
     fi
 
-    cmake --build $cmakeBuildDir --config $buildType
+    cmake --build $cmakeBuildDir --config $buildType -j${cpu_core_count} --verbose
 
     if [ "$IsWindows" = true ]; then
-        cmake --build $cmakeBuildDir --config $buildType --target install
+        cmake --build $cmakeBuildDir --config $buildType -j${cpu_core_count} --target install --verbose
     else
         cmake --install $cmakeBuildDir
     fi
@@ -223,10 +267,13 @@ build() {
 
     if [ ! -d "$cmakeInstallPrefix" ] || [ ! -e "$cmakeInstallPrefix" ]; then
         echo 'Installation failed.'
-        exit 1
+        exit -1
     fi
     
     if [ -n "$ArtifactPath" ]; then
+        # Remove all .lib and .a files
+        find $cmakeInstallPrefix -type f \( -name '*.lib' -o -name '*.a' \) -delete
+        # Pack the installation directory
         tar -czvf $ArtifactPath -C $cmakeInstallPrefix .
     fi
 }
