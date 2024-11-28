@@ -125,26 +125,6 @@ installFbxSdk() {
         echo "FBX SDK MacOS pkg: $fbxSdkMacOSPkgFile"
         sudo installer -pkg "$fbxSdkMacOSPkgFile" -target /
         ln -s "/Applications/Autodesk/FBX SDK/$fbxSdkVersion" fbxsdk/Home
-    elif [ "$IsLinux" = true ]; then
-        fbxSdkUrl='https://www.autodesk.com/content/dam/autodesk/www/adn/fbx/2020-2-1/fbx202021_fbxsdk_linux.tar.gz'
-        fbxSdkTarball=fbxsdk/fbxsdk.tar.gz
-
-        echo "Downloading FBX SDK tar ball from $fbxSdkUrl ..."
-        downloadFile "$fbxSdkUrl" "$fbxSdkTarball"
-        tar -zxvf "$fbxSdkTarball" -C fbxsdk
-
-        fbxSdkInstallationProgram=fbxsdk/fbx202021_fbxsdk_linux
-        chmod ugo+x "$fbxSdkInstallationProgram"
-
-        fbxSdkHomeLocation="$HOME/fbxsdk/install"
-        echo "Installing from $fbxSdkInstallationProgram..."
-        mkdir -p "$fbxSdkHomeLocation"
-
-        # This is really a HACK way after many tries...
-        yes yes | "$fbxSdkInstallationProgram" "$fbxSdkHomeLocation"
-        echo ''
-
-        echo "Installation finished($fbxSdkHomeLocation)."
     else
         echo 'FBXSDK is not available on target platform.'
         exit 1
