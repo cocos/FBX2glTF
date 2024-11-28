@@ -27,7 +27,7 @@ list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_BINARY_DIR}")
 # stuff
 find_package(LibXml2 REQUIRED)
 find_package(ZLIB REQUIRED)
-find_package(fmt REQUIRED)
+find_package(fmt CONFIG REQUIRED)
 
 # fbx sdk
 if (NOT DEFINED FbxSdkHome)
@@ -244,7 +244,7 @@ target_include_directories(libFBX2glTF SYSTEM PUBLIC
 target_include_directories(appFBX2glTF PUBLIC
   "third_party/CLI11"
 )
-target_link_libraries(appFBX2glTF libFBX2glTF fmt::fmt-header-only)
+target_link_libraries(appFBX2glTF PRIVATE libFBX2glTF fmt::fmt-header-only)
 
 if(MSVC)
     set_target_properties(libFBX2glTF PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
