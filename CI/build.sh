@@ -126,7 +126,7 @@ installFbxSdk() {
         sudo installer -pkg "$fbxSdkMacOSPkgFile" -target /
         ln -s "/Applications/Autodesk/FBX SDK/$fbxSdkVersion" fbxsdk/Home
     else
-        echo 'FBXSDK is not available on target platform.'
+        echo 'FBXSDK is not available on unsupported platform.'
         exit 1
     fi
 
@@ -148,15 +148,18 @@ installDependenciesForMacOS() {
 installDependenciesForOthers() {
     dependencies=('libxml2' 'zlib' 'fmt')
     for libName in "${dependencies[@]}"; do
-        ./vcpkg/vcpkg install "$libName"
+        ./vcpkg/vcpkg install --triplet x64-windows-static "$libName"
     done
 }
 
 installDependencies() {
     if [ "$IsMacOS" = true ]; then
         installDependenciesForMacOS
+    elif [ "$IsWindows" = true ]; then
+        installDependenciesForWindows
     else
-        installDependenciesForOthers
+        echo 'Can not install dependence on unsupported platform'
+        exit 1
     fi
 }
 
@@ -220,7 +223,7 @@ build() {
 
     if [ ! -d "$cmakeInstallPrefix" ] || [ ! -e "$cmakeInstallPrefix" ]; then
         echo 'Installation failed.'
-        exit -1
+        exit 1
     fi
     
     if [ -n "$ArtifactPath" ]; then
