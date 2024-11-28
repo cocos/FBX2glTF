@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 IsWindows=false
 IsMacOS=false
 IsLinux=false
@@ -267,7 +269,7 @@ build() {
 
     if [ ! -d "$cmakeInstallPrefix" ] || [ ! -e "$cmakeInstallPrefix" ]; then
         echo 'Installation failed.'
-        exit -1
+        exit 1
     fi
     
     if [ -n "$ArtifactPath" ]; then

@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 project(FBX2glTF)
 
+set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15")
+
 set(typical_usage_str
   "Example usage:\n\
   > mkdir -p build_debug\n\
@@ -242,7 +244,7 @@ target_include_directories(libFBX2glTF SYSTEM PUBLIC
 target_include_directories(appFBX2glTF PUBLIC
   "third_party/CLI11"
 )
-target_link_libraries(appFBX2glTF libFBX2glTF)
+target_link_libraries(appFBX2glTF libFBX2glTF fmt::fmt-header-only)
 
 if(MSVC)
     set_target_properties(libFBX2glTF PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
