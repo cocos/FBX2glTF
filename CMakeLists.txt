@@ -79,6 +79,7 @@ ExternalProject_Add(Draco
   CMAKE_ARGS
         -DCMAKE_INSTALL_PREFIX=${DRACO_INSTALL_DIR}
         -DBUILD_FOR_GLTF=1
+        -DBUILD_SHARED_LIBS=OFF
         ${ARCH_FLAGS}
 )
 
@@ -221,6 +222,19 @@ if (NOT MSVC)
     "-Wno-null-dereference"
     "-Wunused"
     )
+endif()
+
+if (APPLE)
+    find_library (CF_FRAMEWORK CoreFoundation)
+    message("CoreFoundation Framework: ${CF_FRAMEWORK}")
+    target_link_libraries(libFBX2glTF PRIVATE ${CF_FRAMEWORK})
+
+    find_library(ICONV_LIBRARY iconv)
+    if (ICONV_LIBRARY)
+        target_link_libraries(libFBX2glTF PRIVATE ${ICONV_LIBRARY})
+    else()
+        message(FATAL_ERROR "iconv library not found")
+    endif()
 endif()
 
 target_link_libraries(libFBX2glTF
