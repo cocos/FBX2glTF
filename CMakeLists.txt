@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.15)
 project(FBX2glTF)
 
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15")
@@ -65,21 +65,28 @@ message (STATUS "FBX SDK include directories: ${FBXSDK_INCLUDE_DIR}")
 message (STATUS "FBX SDK libraries: ${FBXSDK_LIBRARY}")
 
 # DRACO
+set(DRACO_INSTALL_DIR "${CMAKE_BINARY_DIR}/draco/install")
+set(ARCH_FLAGS "")
+if (APPLE)
+    set(ARCH_FLAGS "-DCMAKE_OSX_ARCHITECTURES=x86_64;arm64")
+endif()
+
 ExternalProject_Add(Draco
   GIT_REPOSITORY https://github.com/google/draco
   GIT_TAG 1.3.4
   PREFIX draco
-  INSTALL_DIR
+  INSTALL_DIR "${DRACO_INSTALL_DIR}"
   CMAKE_ARGS
-        -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+        -DCMAKE_INSTALL_PREFIX=${DRACO_INSTALL_DIR}
         -DBUILD_FOR_GLTF=1
-        -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64"
+        ${ARCH_FLAGS}
 )
-set(DRACO_INCLUDE_DIR "${CMAKE_BINARY_DIR}/draco/include")
+
+set(DRACO_INCLUDE_DIR "${DRACO_INSTALL_DIR}/include")
 if (WIN32)
-   set(DRACO_LIB "${CMAKE_BINARY_DIR}/draco/lib/dracoenc.lib")
+    set(DRACO_LIB "${DRACO_INSTALL_DIR}/lib/dracoenc.lib")
 else()
-   set(DRACO_LIB "${CMAKE_BINARY_DIR}/draco/lib/libdracoenc.a")
+    set(DRACO_LIB "${DRACO_INSTALL_DIR}/lib/libdracoenc.a")
 endif()
 
 # MATHFU
