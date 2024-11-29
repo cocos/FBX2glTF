@@ -68,7 +68,7 @@ message (STATUS "FBX SDK libraries: ${FBXSDK_LIBRARY}")
 set(DRACO_INSTALL_DIR "${CMAKE_BINARY_DIR}/draco/install")
 set(ARCH_FLAGS "")
 if (APPLE)
-    set(ARCH_FLAGS "-DCMAKE_OSX_ARCHITECTURES=\"x86_64;arm64\"")
+    set(ARCH_FLAGS "-DCMAKE_OSX_ARCHITECTURES=x86_64;arm64")
 endif()
 
 ExternalProject_Add(Draco
@@ -76,6 +76,7 @@ ExternalProject_Add(Draco
   GIT_TAG 1.3.4
   PREFIX draco
   INSTALL_DIR "${DRACO_INSTALL_DIR}"
+  LIST_SEPARATOR ","
   CMAKE_ARGS
         -DCMAKE_INSTALL_PREFIX=${DRACO_INSTALL_DIR}
         -DBUILD_FOR_GLTF=1
