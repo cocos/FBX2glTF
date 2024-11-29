@@ -5,9 +5,7 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15")
 
 set(typical_usage_str
   "Example usage:\n\
-  > mkdir -p build_debug\n\
-  > conan install . -i build_debug -s build_type=Debug -e FBXSDK_SDKS=/home/zell/FBXSDK\n\
-  > conan build . -bf build_debug")
+  > ./CI/build.sh")
 
 if ("${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
   message(FATAL_ERROR
@@ -74,8 +72,8 @@ ExternalProject_Add(Draco
   PREFIX draco
   INSTALL_DIR "${DRACO_INSTALL_DIR}"
   LIST_SEPARATOR "|"
-  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${DRACO_INSTALL_DIR} -DBUILD_FOR_GLTF=1 -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES:STRING=x86_64|arm64
-  BUILD_COMMAND ${CMAKE_COMMAND} --build . --config Release --verbose
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${DRACO_INSTALL_DIR} -DBUILD_FOR_GLTF=1 -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_OSX_ARCHITECTURES:STRING=x86_64|arm64
+  BUILD_COMMAND ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE} --verbose
 )
 set(DRACO_LIB "${DRACO_INSTALL_DIR}/lib/libdracoenc.a")
 else()
@@ -84,8 +82,8 @@ ExternalProject_Add(Draco
   GIT_TAG 1.3.4
   PREFIX draco
   INSTALL_DIR "${DRACO_INSTALL_DIR}"
-  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${DRACO_INSTALL_DIR} -DBUILD_FOR_GLTF=1 -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS_RELEASE="/MT"
-  BUILD_COMMAND ${CMAKE_COMMAND} --build . --config Release --verbose
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${DRACO_INSTALL_DIR} -DBUILD_FOR_GLTF=1 -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_CXX_FLAGS_RELEASE="/MT"
+  BUILD_COMMAND ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE} --verbose
 )
 set(DRACO_LIB "${DRACO_INSTALL_DIR}/lib/dracoenc.lib")
 set_target_properties(Draco PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
@@ -276,11 +274,5 @@ target_include_directories(appFBX2glTF PUBLIC
   "third_party/CLI11"
 )
 target_link_libraries(appFBX2glTF PRIVATE libFBX2glTF fmt::fmt-header-only)
-
-# install (TARGETS libFBX2glTF DESTINATION "bin")
-# install (FILES $<TARGET_LINKER_FILE:libFBX2glTF> DESTINATION "lib" OPTIONAL)
-# if (CMAKE_BUILD_TYPE EQUAL "DEBUG")
-#     install (FILES $<TARGET_PDB_FILE:libFBX2glTF> DESTINATION "bin" OPTIONAL)
-# endif()
 
 install (TARGETS appFBX2glTF DESTINATION "bin")
