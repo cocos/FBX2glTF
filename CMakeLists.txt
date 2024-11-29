@@ -197,7 +197,6 @@ set(LIB_SOURCE_FILES
 )
 
 add_library(libFBX2glTF STATIC ${LIB_SOURCE_FILES})
-set_target_properties(libFBX2glTF PROPERTIES OUTPUT_NAME "FBX2glTF")
 if(MSVC)
     set_target_properties(libFBX2glTF PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
@@ -278,10 +277,10 @@ target_include_directories(appFBX2glTF PUBLIC
 )
 target_link_libraries(appFBX2glTF PRIVATE libFBX2glTF fmt::fmt-header-only)
 
-install (TARGETS libFBX2glTF DESTINATION "bin")
-install (FILES $<TARGET_LINKER_FILE:libFBX2glTF> DESTINATION "lib" OPTIONAL)
-if (CMAKE_BUILD_TYPE EQUAL "DEBUG")
-    install (FILES $<TARGET_PDB_FILE:libFBX2glTF> DESTINATION "bin" OPTIONAL)
-endif()
+# install (TARGETS libFBX2glTF DESTINATION "bin")
+# install (FILES $<TARGET_LINKER_FILE:libFBX2glTF> DESTINATION "lib" OPTIONAL)
+# if (CMAKE_BUILD_TYPE EQUAL "DEBUG")
+#     install (FILES $<TARGET_PDB_FILE:libFBX2glTF> DESTINATION "bin" OPTIONAL)
+# endif()
 
 install (TARGETS appFBX2glTF DESTINATION "bin")
