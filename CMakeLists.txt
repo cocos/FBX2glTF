@@ -66,11 +66,8 @@ message (STATUS "FBX SDK libraries: ${FBXSDK_LIBRARY}")
 
 # DRACO
 set(DRACO_INSTALL_DIR "${CMAKE_BINARY_DIR}/draco/install")
-set(ARCH_FLAGS "")
-if (APPLE)
-    set(ARCH_FLAGS "-DCMAKE_OSX_ARCHITECTURES=x86_64;arm64")
-endif()
 
+if(APPLE)
 ExternalProject_Add(Draco
   GIT_REPOSITORY https://github.com/google/draco
   GIT_TAG 1.3.4
@@ -82,16 +79,28 @@ ExternalProject_Add(Draco
         -DBUILD_FOR_GLTF=1
         -DBUILD_SHARED_LIBS=OFF
         -DCMAKE_BUILD_TYPE=Release
-        ${ARCH_FLAGS}
+        -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64"
   BUILD_COMMAND ${CMAKE_COMMAND} --build . --config Release --verbose
 )
+set(DRACO_LIB "${DRACO_INSTALL_DIR}/lib/libdracoenc.a")
+else()
+ExternalProject_Add(Draco
+  GIT_REPOSITORY https://github.com/google/draco
+  GIT_TAG 1.3.4
+  PREFIX draco
+  INSTALL_DIR "${DRACO_INSTALL_DIR}"
+  LIST_SEPARATOR ","
+  CMAKE_ARGS
+        -DCMAKE_INSTALL_PREFIX=${DRACO_INSTALL_DIR}
+        -DBUILD_FOR_GLTF=1
+        -DBUILD_SHARED_LIBS=OFF
+        -DCMAKE_BUILD_TYPE=Release
+  BUILD_COMMAND ${CMAKE_COMMAND} --build . --config Release --verbose
+)
+set(DRACO_LIB "${DRACO_INSTALL_DIR}/lib/dracoenc.lib")
+endif()
 
 set(DRACO_INCLUDE_DIR "${DRACO_INSTALL_DIR}/include")
-if (WIN32)
-    set(DRACO_LIB "${DRACO_INSTALL_DIR}/lib/dracoenc.lib")
-else()
-    set(DRACO_LIB "${DRACO_INSTALL_DIR}/lib/libdracoenc.a")
-endif()
 
 # MATHFU
 set(mathfu_build_benchmarks OFF CACHE BOOL "")
