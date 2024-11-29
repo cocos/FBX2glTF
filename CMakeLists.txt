@@ -85,9 +85,10 @@ ExternalProject_Add(Draco
   PREFIX draco
   INSTALL_DIR "${DRACO_INSTALL_DIR}"
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${DRACO_INSTALL_DIR} -DBUILD_FOR_GLTF=1 -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release
-
+  BUILD_COMMAND ${CMAKE_COMMAND} --build . --config Release --verbose
 )
 set(DRACO_LIB "${DRACO_INSTALL_DIR}/lib/dracoenc.lib")
+set_target_properties(Draco PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
 set(DRACO_INCLUDE_DIR "${DRACO_INSTALL_DIR}/include")
