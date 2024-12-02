@@ -32,6 +32,16 @@ bool CopyFile(
     const std::string& dstFilename,
     bool createPath = false);
 
+inline std::string NormalizePath(const std::string& path) {
+#ifdef __APPLE__
+    std::string normalizedPath = path;
+    std::replace(normalizedPath.begin(), normalizedPath.end(), '\\', '/');
+    return normalizedPath;
+#else
+    return path;
+#endif
+}
+
 inline std::string GetAbsolutePath(const std::string& filePath) {
   std::string normalizedFilePath = NormalizePath(filePath);
   return std::filesystem::absolute(normalizedFilePath).string();
@@ -72,16 +82,6 @@ inline std::optional<std::string> GetFileSuffix(const std::string& path) {
     return std::nullopt;
   }
   return extension.string().substr(1);
-}
-
-inline std::string NormalizePath(const std::string& path) {
-#ifdef __APPLE__
-  std::string normalizedPath = path;
-  std::replace(normalizedPath.begin(), normalizedPath.end(), '\\', '/');
-  return normalizedPath;
-#else
-  return path;
-#endif
 }
 
 } // namespace FileUtils
