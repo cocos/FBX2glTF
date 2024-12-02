@@ -1,11 +1,11 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.15)
 project(FBX2glTF)
+
+set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15")
 
 set(typical_usage_str
   "Example usage:\n\
-  > mkdir -p build_debug\n\
-  > conan install . -i build_debug -s build_type=Debug -e FBXSDK_SDKS=/home/zell/FBXSDK\n\
-  > conan build . -bf build_debug")
+  > ./CI/build.sh")
 
 if ("${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
   message(FATAL_ERROR
@@ -22,13 +22,10 @@ find_package(Threads REQUIRED)
 
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_BINARY_DIR}")
 
-# stuff to use git to download source code
-add_subdirectory(third_party/libxml2)
-add_subdirectory(third_party/zlib)
-add_subdirectory(third_party/fmt)
-
-# set(FBXSDK_INCLUDE_DIR "/Users/minggo/sourcecode/FBX2glTF/sdk/Darwin/2019.2/include")
-# set(FBXSDK_LIBRARY "/Users/minggo/sourcecode/FBX2glTF/sdk/Darwin/2019.2/lib/clang/release/libfbxsdk.a")
+# stuff
+find_package(LibXml2 REQUIRED)
+find_package(ZLIB REQUIRED)
+find_package(fmt CONFIG REQUIRED)
 
 # fbx sdk
 if (NOT DEFINED FbxSdkHome)
@@ -49,12 +46,11 @@ message (STATUS "CMAKE_CXX_COMPILER_ID: ${CMAKE_CXX_COMPILER_ID}")
 set (FBXSDK_INCLUDE_DIR "${FbxSdkHome}/include")
 if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     if (EXISTS "${FbxSdkHome}/lib/vs2022")
-        set (FBXSDK_LIBRARY "${FbxSdkHome}/lib/vs2022/x64/${FbxSdkConfiguration}/libfbxsdk.lib")
+        set (FBXSDK_LIBRARY "${FbxSdkHome}/lib/vs2022/x64/${FbxSdkConfiguration}/libfbxsdk-mt.lib")
     elseif (EXISTS "${FbxSdkHome}/lib/vs2019")
-        set (FBXSDK_LIBRARY "${FbxSdkHome}/lib/vs2019/x64/${FbxSdkConfiguration}/libfbxsdk.lib")
+        set (FBXSDK_LIBRARY "${FbxSdkHome}/lib/vs2019/x64/${FbxSdkConfiguration}/libfbxsdk-mt.lib")
     else ()
-        set (FbxSdkLibraries "${FbxSdkHome}/lib/vs2017/x64/${FbxSdkConfiguration}/libfbxsdk.lib")
-        set (FbxSdkDynLibraries "${FbxSdkHome}/lib/vs2017/x64/${FbxSdkConfiguration}/libfbxsdk.dll")
+        set (FbxSdkLibraries "${FbxSdkHome}/lib/vs2017/x64/${FbxSdkConfiguration}/libfbxsdk-mt.lib")
     endif ()
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
     set (FBXSDK_LIBRARY "${FbxSdkHome}/lib/clang/${FbxSdkConfiguration}/libfbxsdk.a")
@@ -67,21 +63,33 @@ message (STATUS "FBX SDK include directories: ${FBXSDK_INCLUDE_DIR}")
 message (STATUS "FBX SDK libraries: ${FBXSDK_LIBRARY}")
 
 # DRACO
+set(DRACO_INSTALL_DIR "${CMAKE_BINARY_DIR}/draco/install")
+
+if(APPLE)
 ExternalProject_Add(Draco
   GIT_REPOSITORY https://github.com/google/draco
   GIT_TAG 1.3.4
   PREFIX draco
-  INSTALL_DIR
-  CMAKE_ARGS
-        -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
-        -DBUILD_FOR_GLTF=1
+  INSTALL_DIR "${DRACO_INSTALL_DIR}"
+  LIST_SEPARATOR "|"
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${DRACO_INSTALL_DIR} -DBUILD_FOR_GLTF=1 -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_OSX_ARCHITECTURES:STRING=x86_64|arm64
+  BUILD_COMMAND ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE} --verbose
 )
-set(DRACO_INCLUDE_DIR "${CMAKE_BINARY_DIR}/draco/include")
-if (WIN32)
-   set(DRACO_LIB "${CMAKE_BINARY_DIR}/draco/lib/dracoenc.lib")
+set(DRACO_LIB "${DRACO_INSTALL_DIR}/lib/libdracoenc.a")
 else()
-   set(DRACO_LIB "${CMAKE_BINARY_DIR}/draco/lib/libdracoenc.a")
+ExternalProject_Add(Draco
+  GIT_REPOSITORY https://github.com/google/draco
+  GIT_TAG 1.3.4
+  PREFIX draco
+  INSTALL_DIR "${DRACO_INSTALL_DIR}"
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${DRACO_INSTALL_DIR} -DBUILD_FOR_GLTF=1 -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_CXX_FLAGS_RELEASE="/MT"
+  BUILD_COMMAND ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE} --verbose
+)
+set(DRACO_LIB "${DRACO_INSTALL_DIR}/lib/dracoenc.lib")
+set_target_properties(Draco PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
+
+set(DRACO_INCLUDE_DIR "${DRACO_INSTALL_DIR}/include")
 
 # MATHFU
 set(mathfu_build_benchmarks OFF CACHE BOOL "")
@@ -187,9 +195,15 @@ set(LIB_SOURCE_FILES
 )
 
 add_library(libFBX2glTF STATIC ${LIB_SOURCE_FILES})
-set_target_properties(libFBX2glTF PROPERTIES OUTPUT_NAME "FBX2glTF")
+if(MSVC)
+    set_target_properties(libFBX2glTF PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
+
 add_executable(appFBX2glTF src/FBX2glTF.cpp)
 set_target_properties(appFBX2glTF PROPERTIES OUTPUT_NAME "FBX2glTF")
+if(MSVC)
+    set_target_properties(appFBX2glTF PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
 
 add_dependencies(libFBX2glTF
   Draco
@@ -210,16 +224,36 @@ if (NOT MSVC)
     )
 endif()
 
+if (APPLE)
+    find_library (CF_FRAMEWORK CoreFoundation)
+    message("CoreFoundation Framework: ${CF_FRAMEWORK}")
+    target_link_libraries(libFBX2glTF PRIVATE ${CF_FRAMEWORK})
+
+    find_library(ICONV_LIBRARY iconv)
+    if (ICONV_LIBRARY)
+        target_link_libraries(libFBX2glTF PRIVATE ${ICONV_LIBRARY})
+    else()
+        message(FATAL_ERROR "iconv library not found")
+    endif()
+endif()
+
 target_link_libraries(libFBX2glTF
-  ${FRAMEWORKS}
-  ${DRACO_LIB}
-  ${FBXSDK_LIBRARY}
-  ${CMAKE_DL_LIBS}
-  ${CMAKE_THREAD_LIBS_INIT}
-  zlibstatic
-  LibXml2
-  fmt
+  PRIVATE ${FRAMEWORKS}
+  PRIVATE ${DRACO_LIB}
+  PRIVATE ${CMAKE_DL_LIBS}
+  PRIVATE ${CMAKE_THREAD_LIBS_INIT}
+  PRIVATE ZLIB::ZLIB
+  PRIVATE fmt::fmt
+  PRIVATE fmt::fmt-header-only
+  PRIVATE ${FBXSDK_LIBRARY}
 )
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    # I don't know why on Ubuntu "PUBLIC" is needed, otherwise there're link errors.
+    target_link_libraries(libFBX2glTF PUBLIC LibXml2::LibXml2)
+else ()
+    target_link_libraries(libFBX2glTF PRIVATE ${LIBXML2_LIBRARIES})
+endif ()
 
 target_include_directories(libFBX2glTF PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -233,18 +267,12 @@ target_include_directories(libFBX2glTF SYSTEM PUBLIC
   ${MATHFU_INCLUDE_DIRS}
   ${FIFO_MAP_INCLUDE_DIR}
   ${CPPCODEC_INCLUDE_DIR}
+  ${LIBXML2_INCLUDE_DIR}
 )
-
-if (APPLE)
- find_package(Iconv MODULE REQUIRED)
- target_link_libraries(libFBX2glTF Iconv)
-else()
- find_package(libiconv MODULE REQUIRED)
- target_link_libraries(libFBX2glTF libiconv::libiconv)
-endif()
-
 
 target_include_directories(appFBX2glTF PUBLIC
   "third_party/CLI11"
 )
-target_link_libraries(appFBX2glTF libFBX2glTF)
+target_link_libraries(appFBX2glTF PRIVATE libFBX2glTF fmt::fmt-header-only)
+
+install (TARGETS appFBX2glTF DESTINATION "bin")

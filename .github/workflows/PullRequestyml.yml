@@ -1,0 +1,41 @@
+name: Pull Request Test
+
+on: [pull_request]
+
+jobs:
+  test:
+    name: Test on Windows
+    runs-on: windows-2019
+    steps:
+      - uses: actions/checkout@v4
+        name: Checkout
+  
+      - name: Build
+        shell: bash
+        run: |
+          CI/build.sh
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with: 
+          name: Windows-artifact
+          path: out/install/Release
+
+  test_on_mac:
+    name: Test on macOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        name: 
+  
+      - name: Build
+        shell: bash
+        run: |
+          CI/build.sh
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with: 
+          name: macOS-artifact
+          path: out/install/Release
+
