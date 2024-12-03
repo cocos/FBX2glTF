@@ -56,7 +56,7 @@ jobs:
       - id: get_this_release_info
         shell: bash
         run: |
-          artifactPath="FBX-glTF-conv-${{ needs.get_release_info_job.outputs.version }}-win32.tar.gz"
+          artifactPath="FBX2glTF-${{ needs.get_release_info_job.outputs.version }}-win32.tar.gz"
           echo "artifactPath=$artifactPath" >> $GITHUB_ENV
       - id: build
         name: Build
@@ -89,7 +89,7 @@ jobs:
         shell: bash
         run: |
           osName=$(uname | tr '[:upper:]' '[:lower:]')
-          artifactPath="FBX-glTF-conv-${{ needs.get_release_info_job.outputs.version }}-$osName.tar.gz"
+          artifactPath="FBX2glTF-${{ needs.get_release_info_job.outputs.version }}-$osName.tar.gz"
           echo "artifactPath=$artifactPath" >> $GITHUB_ENV
       - id: build
         name: Build
@@ -105,6 +105,7 @@ jobs:
           file: ${{ env.artifactPath }}
           asset_name: ${{ env.artifactPath }}
           tag: ${{ needs.get_release_info_job.outputs.tag_name }}
+
   publish_to_npm_job:
     name: Publish to NPM
     runs-on: ubuntu-latest
