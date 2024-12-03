@@ -140,7 +140,7 @@ jobs:
       
       - name: npm ci & npm run build
         run: |
-          cd publish
+          cd npm/fbx2gltf
           npm ci
           npm run build
           tree .
