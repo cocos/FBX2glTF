@@ -138,13 +138,6 @@ jobs:
           cp Release/bin/FBX2glTF npm/fbx2gltf/bin/Darwin
           cp Release/bin/FBX2glTF.exe npm/fbx2gltf/bin/Windows_NT
       
-      - name: npm ci & npm run build
-        run: |
-          cd npm/fbx2gltf
-          npm ci
-          npm run build
-          tree .
-      
       - name: Modify package.json and VERSION
         run: |
           cd publish
