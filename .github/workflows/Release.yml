@@ -140,7 +140,7 @@ jobs:
       
       - name: Modify package.json and VERSION
         run: |
-          cd publish
+          cd npm/fbx2gltf
           sed -i "s/\"version\": \".*\"/\"version\": \"${{ needs.get_release_info_job.outputs.version }}\"/g" package.json
           sed -i "s/\"version\": \".*\"/\"version\": \"${{ needs.get_release_info_job.outputs.version }}\"/g" package-lock.json
           echo "${{ needs.get_release_info_job.outputs.version }}" > VERSION
