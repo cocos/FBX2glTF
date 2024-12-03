@@ -132,8 +132,10 @@ jobs:
          
       - name: Copy files to publish directory
         run: |
-          cp Release/bin/FBX-glTF-conv npm/fbx2gltf/bin/Darwin
-          cp Release/bin/FBX-glTF-conv.exe npm/fbx2gltf/bin/Windows_NT
+          mkdir -p npm/fbx2gltf/bin/Darwin
+          mkdir -p npm/fbx2gltf/bin/Windows_NT
+          cp Release/bin/FBX2glTF npm/fbx2gltf/bin/Darwin
+          cp Release/bin/FBX2glTF.exe npm/fbx2gltf/bin/Windows_NT
       
       - name: npm ci & npm run build
         run: |
