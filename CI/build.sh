@@ -169,16 +169,9 @@ installDependenciesForMacOS() {
 }
 
 installDependenciesForWindows() {
-    dependencies=('libxml2' 'zlib' 'fmt')
+    dependencies=('libxml2[core]' 'zlib' 'fmt')
     for libName in "${dependencies[@]}"; do
         ./vcpkg/vcpkg install "$libName" --triplet x64-windows-static
-    done
-}
-
-installDependenciesForOthers() {
-    dependencies=('libxml2' 'zlib' 'fmt')
-    for libName in "${dependencies[@]}"; do
-        ./vcpkg/vcpkg install "$libName"
     done
 }
 
@@ -187,8 +180,6 @@ installDependencies() {
         installDependenciesForMacOS
     elif [ "$IsWindows" = true ]; then
         installDependenciesForWindows
-    else
-        installDependenciesForOthers
     fi
 }
 
