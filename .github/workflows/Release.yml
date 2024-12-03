@@ -149,5 +149,5 @@ jobs:
         with:
           token: ${{ secrets.NPM_PUBLISH_FOR_PUBLIC_REPO }}
           registry: "https://registry.npmjs.org"
-          package: publish
+          package: npm/fbx2gltf
           access: public
