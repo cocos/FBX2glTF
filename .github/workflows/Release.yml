@@ -22,7 +22,7 @@ jobs:
         shell: bash
         run: |
           version="${{ inputs.version }}"
-          tagName="release-v$version"
+          tagName="v$version"
           releaseName="Release $version"
           echo "Version: $version"
           echo "Tag Name: $tagName"
