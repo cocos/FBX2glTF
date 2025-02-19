@@ -45,8 +45,7 @@ inline std::string NormalizePath(const std::string& path) {
 }
 
 inline std::string GetAbsolutePath(const std::string& filePath) {
-  std::string normalizedPath = NormalizePath(filePath);
-  std::filesystem::path absolutePath = std::filesystem::absolute(ConvertToPlatformPath(normalizedPath));
+  std::filesystem::path absolutePath = std::filesystem::absolute(ConvertToPlatformPath(filePath));
   return absolutePath.string();
 }
 
@@ -55,35 +54,29 @@ inline std::string GetCurrentFolder() {
 }
 
 inline bool FileExists(const std::string& filePath) {
-  std::string normalizedPath = NormalizePath(filePath);
-  std::string platformPath = ConvertToPlatformPath(normalizedPath);
+  std::string platformPath = ConvertToPlatformPath(filePath);
   return std::filesystem::exists(platformPath) && std::filesystem::is_regular_file(platformPath);
 }
 
 inline bool FolderExists(const std::string& path) {
-  std::string normalizedPath = NormalizePath(path);
-  std::string platformPath = ConvertToPlatformPath(normalizedPath);
+  std::string platformPath = ConvertToPlatformPath(path);
   return std::filesystem::exists(platformPath) && std::filesystem::is_directory(platformPath);
 }
 
 inline std::string getFolder(const std::string& path) {
-  std::string normalizedPath = NormalizePath(path);
-  return std::filesystem::path(ConvertToPlatformPath(normalizedPath)).parent_path().string();
+  return std::filesystem::path(ConvertToPlatformPath(path)).parent_path().string();
 }
 
 inline std::string GetFileName(const std::string& filePath) {
-  std::string normalizedPath = NormalizePath(filePath);
-  return std::filesystem::path(ConvertToPlatformPath(normalizedPath)).filename().string();
+  return std::filesystem::path(ConvertToPlatformPath(filePath)).filename().string();
 }
 
 inline std::string GetFileBase(const std::string& filePath) {
-  std::string normalizedPath = NormalizePath(filePath);
-  return std::filesystem::path(ConvertToPlatformPath(normalizedPath)).stem().string();
+  return std::filesystem::path(ConvertToPlatformPath(filePath)).stem().string();
 }
 
 inline std::optional<std::string> GetFileSuffix(const std::string& filePath) {
-  std::string normalizedPath = NormalizePath(filePath);
-  std::string platformPath = ConvertToPlatformPath(normalizedPath);
+  std::string platformPath = ConvertToPlatformPath(filePath);
 
   const auto& extension = std::filesystem::path(platformPath).extension();
   if (extension.empty()) {
