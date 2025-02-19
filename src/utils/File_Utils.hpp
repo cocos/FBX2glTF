@@ -32,7 +32,7 @@ bool CopyFile(
     const std::string& dstFilename,
     bool createPath = false);
 
-std::filesystem::path ConvertToPlatformPath(const std::string& path);
+std::string ConvertToPlatformPath(const std::string& path);
 
 inline std::string NormalizePath(const std::string& path) {
 #ifdef __APPLE__

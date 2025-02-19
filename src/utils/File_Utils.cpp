@@ -91,21 +91,25 @@ bool CopyFile(const std::string& srcFilename, const std::string& dstFilename, bo
   return false;
 }
 
-std::filesystem::path ConvertToPlatformPath(const std::string& path) {
-  std::string normalizedPath = NormalizePath(path);
+std::string ConvertToPlatformPath(const std::string& path) {
+    std::string normalizedPath = NormalizePath(path);
 
 #ifdef _WIN32
-    // Windows: UTF-8 (std::string) to UTF-16 (std::wstring)
+    // Step 1: Convert UTF-8 (std::string) to UTF-16 (std::wstring)
     int size_needed = MultiByteToWideChar(CP_UTF8, 0, normalizedPath.c_str(), -1, nullptr, 0);
     if (size_needed == 0) return {};
 
     std::wstring wPath(size_needed, 0);
     MultiByteToWideChar(CP_UTF8, 0, normalizedPath.c_str(), -1, &wPath[0], size_needed);
 
-    return std::filesystem::path(wPath);
+    // Step 2: Convert std::wstring to std::filesystem::path
+    std::filesystem::path fsPath(wPath);
+
+    // Step 3: Convert back to std::string (UTF-8)
+    return fsPath.string();
 #else
     // Linux/macOS use UTF-8 directly
-    return std::filesystem::path(normalizedPath);
+    return std::filesystem::path(normalizedPath).string();
 #endif
 }
 
