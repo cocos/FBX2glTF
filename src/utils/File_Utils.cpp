@@ -18,7 +18,6 @@
 
 #ifdef _WIN32
 #define NOMINMAX
-#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #endif
 
@@ -93,7 +92,7 @@ bool CopyFile(const std::string& srcFilename, const std::string& dstFilename, bo
   return false;
 }
 
-std::string ConvertToPlatformPath(const std::string& path) {
+std::filesystem::path ConvertToPlatformPath(const std::string& path) {
     std::string normalizedPath = NormalizePath(path);
 
 #ifdef _WIN32
@@ -105,13 +104,10 @@ std::string ConvertToPlatformPath(const std::string& path) {
     MultiByteToWideChar(CP_UTF8, 0, normalizedPath.c_str(), -1, &wPath[0], size_needed);
 
     // Step 2: Convert std::wstring to std::filesystem::path
-    std::filesystem::path fsPath(wPath);
-
-    // Step 3: Convert back to std::string (UTF-8)
-    return fsPath.string();
+    return std::filesystem::path(wPath);
 #else
     // Linux/macOS use UTF-8 directly
-    return std::filesystem::path(normalizedPath).string();
+    return std::filesystem::path(normalizedPath);
 #endif
 }
 
