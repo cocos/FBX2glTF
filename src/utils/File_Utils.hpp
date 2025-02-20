@@ -56,12 +56,14 @@ inline std::string GetCurrentFolder() {
 
 inline bool FileExists(const std::string& filePath) {
   std::filesystem::path path = ConvertToPlatformPath(filePath);
-  return std::filesystem::exists(path) && std::filesystem::is_regular_file(path);
+  std::error_code errorCode;
+  return std::filesystem::exists(path, errorCode) && std::filesystem::is_regular_file(path, errorCode);
 }
 
 inline bool FolderExists(const std::string& path) {
   std::filesystem::path platformPath = ConvertToPlatformPath(path);
-  return std::filesystem::exists(platformPath) && std::filesystem::is_directory(platformPath);
+  std::error_code errorCode;
+  return std::filesystem::exists(platformPath, errorCode) && std::filesystem::is_directory(platformPath, errorCode);
 }
 
 inline std::string getFolder(const std::string& path) {
