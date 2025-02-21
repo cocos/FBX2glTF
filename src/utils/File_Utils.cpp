@@ -16,6 +16,11 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#ifdef _WIN32
+#define NOMINMAX
+#include <windows.h>
+#endif
+
 #include "FBX2glTF.h"
 #include "String_Utils.hpp"
 
@@ -86,4 +91,5 @@ bool CopyFile(const std::string& srcFilename, const std::string& dstFilename, bo
       srcSize);
   return false;
 }
+
 } // namespace FileUtils
